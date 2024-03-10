@@ -1,0 +1,105 @@
+server:
+  port: 8081
+
+
+spring:
+  application:
+    name: USER-SERVICE
+  datasource:
+    url: jdbc:mysql://localhost:3306/microservices
+    username: root
+    password: manohar
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+#    properties:
+#      hibernate:
+#        dialect: org.hibernate.dialect.MySQL8Dialect
+#  application:
+#    name: User-Service
+#  profiles:
+#    active: prod
+#  profiles:
+#    active: dev
+
+  config:
+    import: optional:configserver:http://localhost:8085
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: https://dev-67491663.okta.com/oauth2/default
+      client:
+        registration:
+          my-internal-client:
+            provider: okta
+            authorizationGrantType: client_credentials
+            scope:
+              - internal
+            clientId: 0oafjg6yujWzIz8JI5d7
+            clientSecret: 7WjjdGndzX8J00SY9NxD4ejZUER6oWfHgFLvH-eVVuvNjPlaAoPMDJhJZO2mQY1Q
+        provider:
+          okta:
+            issuerUri: https://dev-67491663.okta.com/oauth2/default
+
+
+
+
+
+management:
+  health:
+    circuitbreakers:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+  endpoint:
+    health:
+      show-details: ALWAYS
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      ratingHotelBreaker:
+        registerHealthIndicator: true
+        eventConsumerBufferSize: 10
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        slidingWindowType: COUNT_BASED
+        waitDurationInOpenState: 6s
+
+  retry:
+    instances:
+      ratingHotelService:
+        maxAttempts: 3
+        waitDuration: 5s
+
+  ratelimiter:
+    instances:
+      userRateLimitter:
+        limitRefreshPeriod: 4s
+        limitForPeriod: 2
+        timeoutDuration: 2s
+
+
+okta:
+  oauth2:
+    issuer: https://dev-67491663.okta.com/oauth2/default
+    audience: api://default
+#    client-id: 0oafjg6yujWzIz8JI5d7
+#    client-secret: 7WjjdGndzX8J00SY9NxD4ejZUER6oWfHgFLvH-eVVuvNjPlaAoPMDJhJZO2mQY1Q
+#    scopes:
+#      - openid
+#      - profile
+#      - email
+#      - offline_access
+
